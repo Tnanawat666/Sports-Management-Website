@@ -1,0 +1,26 @@
+[
+    {
+        "name": "QUALIFICATION",
+        "label": "Qualification"
+    },
+    {
+        "name": "GROUP",
+        "label": "Group"
+    },
+    {
+        "name": "STATE",
+        "label": "Stage"
+    },
+    {
+        "name": "KNOCKOUT",
+        "label": "Knockout Stage"
+    },
+    {
+        "name": "SEMI_FINAL",
+        "label": "Semi-Final"
+    },
+    {
+        "name": "FINAL",
+        "label": "Final"
+    }
+]

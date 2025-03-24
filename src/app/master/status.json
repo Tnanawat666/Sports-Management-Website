@@ -1,0 +1,26 @@
+[
+    {
+        "name": "LIVE",
+        "label": "Live"
+    },
+    {
+        "name": "RESULT",
+        "label": "Result"
+    },
+    {
+        "name": "START_LIST",
+        "label": "Start List"
+    },
+    {
+        "name": "RANKING",
+        "label": "Ranking"
+    },
+    {
+        "name": "SCHEDULED",
+        "label": "Scheduled"
+    },
+    {
+        "name": "UPCOMING",
+        "label": "Upcoming"
+    }
+]
