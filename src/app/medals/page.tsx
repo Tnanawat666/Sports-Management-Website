@@ -195,7 +195,8 @@ export default function Page() {
         >
           Countries
         </button>
-        <button
+        {/* players section */}
+        {/* <button
           className={`btn btn-primary btn-outline btn-xs ${param.get('category') === 'players' ? 'btn-active' : ''
             }`}
           onClick={() => {
@@ -205,7 +206,7 @@ export default function Page() {
           }}
         >
           Players
-        </button>
+        </button> */}
       </div>
 
       <div className='overflow-x-auto mt-5'>
@@ -261,7 +262,7 @@ export default function Page() {
         ) : (
           // Athlete ranking table
           <table className='table'>
-            <thead>
+            {/* <thead>
               <tr className='text-xl'>
                 <th># Rank</th>
                 <th className="text-center">
@@ -340,7 +341,7 @@ export default function Page() {
                     )}
                   </tr>
                 ))}
-            </tbody>
+            </tbody> */}
           </table>
         )}
       </div>

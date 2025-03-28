@@ -57,7 +57,7 @@ export default function EventDetailPage() {
 
   // add point and score each athlete and athlete > 1 -> can use handle for loop
   const [athleteScores, setAthleteScores] = useState<{
-    [key: string]: { score: number; point: number, gold: number, silver: number, bronze: number };
+    [key: string]: { score: number, score1: number, score2: number, score3: number, point: number, gold: number, silver: number, bronze: number };
   }>({})
 
   const [btnAddAthlete, setBtnAddAthlete] = useState(false)
@@ -189,48 +189,49 @@ export default function EventDetailPage() {
 
   const handleAddResult = async () => {
     await Swal.fire({
-      title: 'Are you sure?',
-      text: 'Do you want to save the result?',
-      icon: 'warning',
+      title: "Are you sure?",
+      text: "Do you want to save the result?",
+      icon: "warning",
       showCancelButton: true,
       reverseButtons: true,
-      confirmButtonText: 'Yes, save it',
-      cancelButtonText: 'No, cancel',
-      loaderHtml: '<span class="loading loading-lg"></span>',
+      confirmButtonText: "Yes, save it",
+      cancelButtonText: "No, cancel",
       showLoaderOnConfirm: true,
       preConfirm: async () => {
         try {
-          const res = await axios.post('/api/addResultToEvent', {
+          const res = await axios.post("/api/addResultToEvent", {
             id_event: event?.id,
-            athletes_result: Object.entries(athleteScores).map(
-              ([id, { score, point, gold, silver, bronze }]) => ({
-                id: parseInt(id),
-                score,
-                point,
-                gold,
-                silver,
-                bronze
-              })
-            ),
-          })
+            athletes_result: Object.entries(athleteScores).map(([id, { scores, score, point, gold, silver, bronze }]) => ({
+              id: parseInt(id),
+              score,
+              score1: scores?.[0] ?? 0,
+              score2: scores?.[1] ?? 0,
+              score3: scores?.[2] ?? 0,
+              point,
+              gold: gold || 0,
+              silver: silver || 0,
+              bronze: bronze || 0,
+            })),
+          });
+
           if (res.data.success) {
-            Swal.fire({
-              title: 'Result saved successfully',
-              icon: 'success',
-            })
-            fetchEventWithAthletes()
+            Swal.fire({ title: "Result saved successfully", icon: "success" });
+            fetchEventWithAthletes(); // Refresh data to make sure scores are retained
           }
         } catch (e) {
-          console.error('Error adding result:', e)
-          Swal.fire({
-            title: 'Error saving result',
-            text: 'Internal Server Error',
-            icon: 'error',
-          })
+          console.error("Error adding result:", e);
+          Swal.fire({ title: "Error saving result", text: "Internal Server Error", icon: "error" });
         }
       },
-    })
-  }
+    });
+  };
+
+  const getMedalFromData = (athlete) => {
+    if (athlete.gold === 1) return "Gold";
+    if (athlete.silver === 1) return "Silver";
+    if (athlete.bronze === 1) return "Bronze";
+    return "None";
+  };
 
   // Fetch authentication data
   useEffect(() => {
@@ -269,6 +270,7 @@ export default function EventDetailPage() {
     setScoreType(event.scoretype || '')
     setRemark(event.remark || '')
   }, [event])
+
 
   // Render loading state
   if (loadingMemberEvent) {
@@ -373,17 +375,7 @@ export default function EventDetailPage() {
               <th className='text-center'>Country</th>
               <th className="text-center">
                 <span className="flex justify-center items-center gap-1">
-                  <FaMedal color="#FFD700" /> Gold
-                </span>
-              </th>
-              <th className="text-center">
-                <span className="flex justify-center items-center gap-1">
-                  <FaMedal color="#C0C0C0" /> Silver
-                </span>
-              </th>
-              <th className="text-center">
-                <span className="flex justify-center items-center gap-1">
-                  <FaMedal color="#CD7F32" /> Bronze
+                  <FaMedal size={24} /> Medal
                 </span>
               </th>
               {auth && <th className='text-center'>Action</th>}
@@ -401,17 +393,7 @@ export default function EventDetailPage() {
               <th className='text-center'>Country</th>
               <th className="text-center">
                 <span className="flex justify-center items-center gap-1">
-                  <FaMedal color="#FFD700" /> Gold
-                </span>
-              </th>
-              <th className="text-center">
-                <span className="flex justify-center items-center gap-1">
-                  <FaMedal color="#C0C0C0" /> Silver
-                </span>
-              </th>
-              <th className="text-center">
-                <span className="flex justify-center items-center gap-1">
-                  <FaMedal color="#CD7F32" /> Bronze
+                  <FaMedal size={24} /> Medal
                 </span>
               </th>
               {auth && <th className='text-center'>Action</th>}
@@ -420,6 +402,7 @@ export default function EventDetailPage() {
         )}
         <tbody>
           {memberEvent.map((member) => {
+            console.log(member)
             // ถ้าไม่มี point ให้เป็น '-'
             const rank = member.point ? memberEvent.indexOf(member) + 1 : '-'
 
@@ -427,40 +410,50 @@ export default function EventDetailPage() {
               <tr key={member.id} className='hover:bg-gray-100'>
                 <td className='text-center'>{rank}</td>
 
-                {/* Conditionally render score inputs based on scoretype */}
+                {/* เปลี่ยนตารางตาม scoretype */}
                 {event?.scoretype === 'THREE' ? (
                   <>
-                    {[0, 1, 2].map((i) => (
+                    {[1, 2, 3].map((i) => (
                       <td key={i} className="text-center">
                         {auth ? (
                           <input
                             type="text"
                             className="input input-bordered input-sm w-20"
                             value={
-                              athleteScores[member.id]?.scores?.[i] || member.scores?.[i] || 0
+                              athleteScores[member.id]?.scores?.[i - 1] ??
+                              member[`score${i}`] ??
+                              0
                             }
                             onChange={(e) => {
-                              const newScores = [...(athleteScores[member.id]?.scores || [0, 0, 0])]
-                              newScores[i] = parseFloat(e.target.value) || 0
+                              const newScores = [...(athleteScores[member.id]?.scores || [
+                                member.score1 ?? 0,
+                                member.score2 ?? 0,
+                                member.score3 ?? 0,
+                              ])]; // Initialize scores with existing DB values
+
+                              newScores[i - 1] = parseFloat(e.target.value) || 0;
+
                               setAthleteScores((prev) => ({
                                 ...prev,
                                 [member.id]: {
                                   ...prev[member.id],
                                   scores: newScores,
-                                  score: Math.max(...newScores), // Calculate best score dynamically
+                                  score: Math.max(...newScores), // Best score calculation
                                 },
-                              }))
+                              }));
                             }}
                           />
                         ) : (
-                          member.scores?.[i] || 0
+                          member[`score${i}`] ?? 0
                         )}
                       </td>
                     ))}
+
                     <td className="text-center">
-                      {/* Best score calculation */}
-                      {member.score}
+                      {/* Display Best Score */}
+                      {athleteScores[member.id]?.score ?? member.score ?? 0}
                     </td>
+
                   </>
                 ) : (
                   <td className='text-center'>
@@ -468,16 +461,28 @@ export default function EventDetailPage() {
                       <input
                         type='text'
                         className='input input-bordered input-sm w-20'
-                        value={athleteScores[member.id]?.score || member.score || 0}
-                        onChange={(e) =>
+                        value={athleteScores[member.id]?.score ?? member.score ?? ""}
+                        onChange={(e) => {
+                          const value = e.target.value.trim(); // ตัดช่องว่างเผื่อมีการพิมพ์ผิด
+                          const parsedValue = parseFloat(value);
+
                           setAthleteScores((prev) => ({
                             ...prev,
                             [member.id]: {
                               ...prev[member.id],
-                              score: parseFloat(e.target.value),
+                              score: value === "" || isNaN(parsedValue) ? "" : parsedValue,
                             },
-                          }))
-                        }
+                          }));
+                        }}
+                        onBlur={() => {
+                          setAthleteScores((prev) => ({
+                            ...prev,
+                            [member.id]: {
+                              ...prev[member.id],
+                              score: prev[member.id]?.score === "" ? 0 : prev[member.id]?.score,
+                            },
+                          }));
+                        }}
                       />
                     ) : (
                       member.score || 0
@@ -490,16 +495,27 @@ export default function EventDetailPage() {
                     <input
                       type='text'
                       className='input input-bordered input-sm w-20'
-                      value={athleteScores[member.id]?.point || member.point || 0}
-                      onChange={(e) =>
+                      value={athleteScores[member.id]?.point ?? member.point ?? ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const parsedValue = parseFloat(value);
                         setAthleteScores((prev) => ({
                           ...prev,
                           [member.id]: {
                             ...prev[member.id],
-                            point: parseFloat(e.target.value),
+                            point: value === "" || isNaN(parsedValue) ? "" : parsedValue,
                           },
-                        }))
-                      }
+                        }));
+                      }}
+                      onBlur={() => {
+                        setAthleteScores((prev) => ({
+                          ...prev,
+                          [member.id]: {
+                            ...prev[member.id],
+                            point: prev[member.id]?.point === "" ? 0 : prev[member.id]?.point,
+                          },
+                        }));
+                      }}
                     />
                   ) : (
                     member.point || 0
@@ -529,64 +545,37 @@ export default function EventDetailPage() {
                 <td className='text-center'>{member.id}</td>
                 <td className='text-center'>{member.classification}</td>
                 <td className='text-center'>{member.country}</td>
-                <td className='text-center'>
+                <td className="text-center">
                   {auth ? (
-                    <input
-                      type='text'
-                      className='input input-bordered input-sm w-20'
-                      value={athleteScores[member.id]?.gold || member.gold || 0}
-                      onChange={(e) =>
+                    <select
+                      className="select select-bordered select-sm w-30"
+                      value={getMedalFromData(athleteScores[member.id] ?? member)}
+                      onChange={(e) => {
+                        const newMedal = e.target.value;
+
                         setAthleteScores((prev) => ({
                           ...prev,
                           [member.id]: {
                             ...prev[member.id],
-                            gold: parseFloat(e.target.value),
+                            gold: newMedal === "Gold" ? 1 : 0,
+                            silver: newMedal === "Silver" ? 1 : 0,
+                            bronze: newMedal === "Bronze" ? 1 : 0,
+                            scores: prev[member.id]?.scores || [
+                              member.score1 ?? 0,
+                              member.score2 ?? 0,
+                              member.score3 ?? 0,
+                            ], // Ensure scores are retained
                           },
-                        }))
-                      }
-                    />
+                        }));
+                      }}
+                    >
+                      <option value="None">⭕ None</option>
+                      <option value="Gold">🥇 Gold</option>
+                      <option value="Silver">🥈 Silver</option>
+                      <option value="Bronze">🥉 Bronze</option>
+                    </select>
                   ) : (
-                    member.gold || 0
-                  )}
-                </td>
-                <td className='text-center'>
-                  {auth ? (
-                    <input
-                      type='text'
-                      className='input input-bordered input-sm w-20'
-                      value={athleteScores[member.id]?.silver || member.silver || 0}
-                      onChange={(e) =>
-                        setAthleteScores((prev) => ({
-                          ...prev,
-                          [member.id]: {
-                            ...prev[member.id],
-                            silver: parseFloat(e.target.value),
-                          },
-                        }))
-                      }
-                    />
-                  ) : (
-                    member.silver || 0
-                  )}
-                </td>
-                <td className='text-center'>
-                  {auth ? (
-                    <input
-                      type='text'
-                      className='input input-bordered input-sm w-20'
-                      value={athleteScores[member.id]?.bronze || member.bronze || 0}
-                      onChange={(e) =>
-                        setAthleteScores((prev) => ({
-                          ...prev,
-                          [member.id]: {
-                            ...prev[member.id],
-                            bronze: parseFloat(e.target.value),
-                          },
-                        }))
-                      }
-                    />
-                  ) : (
-                    member.bronze || 0
+                    getMedalFromData(member)
                   )}
                 </td>
                 {

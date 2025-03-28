@@ -59,6 +59,9 @@ export async function GET(req: NextRequest) {
           return {
             ...athlete,
             score: result?.score || 0,
+            score1: result?.score1 || 0,
+            score2: result?.score2 || 0,
+            score3: result?.score3 || 0,
             point: result?.point || 0,
             gold: result?.gold || 0,
             silver: result?.silver || 0,
